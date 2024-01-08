@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, avg, window, to_json
 from pyspark.sql.types import StructType
 import datetime
+from uuid import uuid4
 
 spark = SparkSession \
     .builder \
@@ -47,7 +48,7 @@ flattenedJsonDf.writeStream \
     .format("console") \
     .trigger(processingTime='2 seconds') \
     .option("truncate","false") \
-    .option("checkpointLocation", "/tmp/spark-checkpoint") \
+    .option("checkpointLocation", f"/tmp/spark-checkpoints/${str(uuid4())}") \
     .start() \
     .awaitTermination()
 """
