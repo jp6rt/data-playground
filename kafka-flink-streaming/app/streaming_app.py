@@ -1,20 +1,30 @@
 import os
 import json
 from datetime import datetime, timedelta
-from pyflink.datastream import StreamExecutionEnvironment, RuntimeExecutionMode
+from pyflink.datastream import \
+    StreamExecutionEnvironment, RuntimeExecutionMode, RuntimeContext
 from pyflink.datastream.connectors.kafka import \
     KafkaSource, KafkaSink, KafkaOffsetsInitializer, KafkaRecordSerializationSchema, DeliveryGuarantee, FlinkKafkaConsumer, FlinkKafkaProducer
 from pyflink.datastream.functions import MapFunction
 from pyflink.datastream.formats.json import JsonRowDeserializationSchema, JsonRowSerializationSchema
+from pyflink.datastream.state import ValueStateDescriptor
 from pyflink.common import Row
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.common.typeinfo import Types
 
-class AddTagFn(MapFunction):
+class EnrichmentFn(MapFunction):
+    def open(self, runtime_context: RuntimeContext):
+        state_desc = ValueStateDescriptor('device_count', Types.INT())
+        self.device_count_state = runtime_context.get_state(state_desc)
+
     def map(self, value):
-        curr_ts = int(datetime.now().timestamp() * 1e3)
-        return Row(value[0], value[1], curr_ts)
+        device_count = self.device_count_state.value()
+        device_count = device_count if device_count is not None else 0
+        device_count = device_count + 1
+        self.device_count_state.update(device_count)
+        # curr_ts = int(datetime.now().timestamp() * 1e3)
+        return Row(value[0], value[1], device_count)
 
 def my_streaming_app():
     env = StreamExecutionEnvironment.get_execution_environment()
@@ -26,51 +36,24 @@ def my_streaming_app():
         f"file:///{CURRENT_DIR}/lib/kafka-clients-3.6.1.jar"
     )
 
-    """
-    # This code is based from the Flink kafka documentation but it doesn't work on 1.17
-    source = KafkaSource.builder() \
-        .set_bootstrap_servers("localhost:9092") \
-        .set_topics("my-source-topic") \
-        .set_starting_offsets(KafkaOffsetsInitializer.latest()) \
-        .set_value_only_deserializer(SimpleStringSchema()) \
-        .build()
+    sourced_type_info = Types.ROW_NAMED(
+        ["ts", "device"],
+        [Types.LONG(), Types.STRING()]
+    )
 
-
-    sink = KafkaSink.builder() \
-        .set_bootstrap_servers("localhost:9092") \
-        .set_record_serializer(
-            KafkaRecordSerializationSchema.builder() \
-                .set_topic("my-sink-topic") \
-                .set_value_serialization_schema(SimpleStringSchema()) \
-                .build()
-        ) \
-        .set_delivery_guarantee(DeliveryGuarantee.AT_LEAST_ONCE) \
-        .build()
-
-    ds = env.from_source(source, WatermarkStrategy.no_watermarks(), "Kafka Source")
-    ds.map(lambda row: json.loads(row)) \
-        .map(lambda row: {"foo": "bar"}) \
-        .map(lambda row: json.dumps(row), output_type=Types.STRING())
-
-    ds.sink_to(sink)
-    """
+    sinkd_type_info = Types.ROW_NAMED(
+        ["ts", "device", "device_count"],
+        [Types.LONG(), Types.STRING(), Types.INT()]
+    )
 
     deserialization_schema = JsonRowDeserializationSchema.builder() \
         .type_info(
-            type_info=Types.ROW_NAMED(
-                ["ts", "device"],
-                [Types.LONG(), Types.STRING()]
-                # [Types.STRING(), Types.STRING()]
-            )
+            type_info=sourced_type_info
         ).ignore_parse_errors().build()
 
     serialization_schema = JsonRowSerializationSchema.builder() \
         .with_type_info(
-            type_info=Types.ROW_NAMED(
-                ["ts", "device", "flink_tag"],
-                [Types.LONG(), Types.STRING(), Types.LONG()]
-                # [Types.STRING(), Types.STRING(), Types.STRING()] 
-            )
+            type_info=sinkd_type_info
         ).build()
 
     kafka_consumer = FlinkKafkaConsumer(
@@ -96,12 +79,8 @@ def my_streaming_app():
     # key by second index which is the deviceid
     ds = ds.key_by(lambda row: row[1])  \
         .map(
-            AddTagFn(),
-           output_type=Types.ROW_NAMED(
-                ["ts", "device", "flink_tag"],
-                [Types.LONG(), Types.STRING(), Types.LONG()]
-                # [Types.STRING(), Types.STRING(), Types.STRING()]
-           )
+            EnrichmentFn(),
+            output_type=sinkd_type_info
         )
 
     ds.add_sink(kafka_producer)
