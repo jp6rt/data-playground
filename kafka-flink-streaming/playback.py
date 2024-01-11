@@ -27,7 +27,11 @@ with topic.get_sync_producer() as producer:
         message = telemetry_data[ counter%len(telemetry_data) ]
         # message['ts'] = int(datetime.now().timestamp() * 1e3)
         message['ts'] = datetime.now().isoformat()
-        producer.produce(json.dumps(message).encode())
+        message2 = {
+            'ts': message['ts'],
+            'device': message['device']
+        }
+        producer.produce(json.dumps(message2).encode())
         counter += 1
-        print(f"Producing message: {json.dumps(message)}")
+        print(f"Producing message: {json.dumps(message2)}")
         time.sleep(0.01)
