@@ -13,9 +13,8 @@ from pyflink.common.typeinfo import Types
 
 class AddTagFn(MapFunction):
     def map(self, value):
-        # value['flink_tag'] = (datetime.now() + timedelta()).isoformat()
-        # value['flink_tag'] = "tag"
-        return Row(value[0], value[1], "tag")
+        curr_ts = int(datetime.now().timestamp() * 1e3)
+        return Row(value[0], value[1], curr_ts)
 
 def my_streaming_app():
     env = StreamExecutionEnvironment.get_execution_environment()
@@ -60,7 +59,8 @@ def my_streaming_app():
         .type_info(
             type_info=Types.ROW_NAMED(
                 ["ts", "device"],
-                [Types.STRING(), Types.STRING()]
+                [Types.LONG(), Types.STRING()]
+                # [Types.STRING(), Types.STRING()]
             )
         ).ignore_parse_errors().build()
 
@@ -68,7 +68,8 @@ def my_streaming_app():
         .with_type_info(
             type_info=Types.ROW_NAMED(
                 ["ts", "device", "flink_tag"],
-                [Types.STRING(), Types.STRING(), Types.STRING()]
+                [Types.LONG(), Types.STRING(), Types.LONG()]
+                # [Types.STRING(), Types.STRING(), Types.STRING()] 
             )
         ).build()
 
@@ -97,8 +98,9 @@ def my_streaming_app():
         .map(
             AddTagFn(),
            output_type=Types.ROW_NAMED(
-               ["ts", "device", "flink_tag"],
-               [Types.STRING(), Types.STRING(), Types.STRING()]
+                ["ts", "device", "flink_tag"],
+                [Types.LONG(), Types.STRING(), Types.LONG()]
+                # [Types.STRING(), Types.STRING(), Types.STRING()]
            )
         )
 

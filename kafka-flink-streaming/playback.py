@@ -25,8 +25,7 @@ with topic.get_sync_producer() as producer:
 
     while True:
         message = telemetry_data[ counter%len(telemetry_data) ]
-        # message['ts'] = int(datetime.now().timestamp() * 1e3)
-        message['ts'] = datetime.now().isoformat()
+        message['ts'] = int(datetime.now().timestamp() * 1e3)
         message2 = {
             'ts': message['ts'],
             'device': message['device']
