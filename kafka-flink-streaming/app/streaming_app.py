@@ -8,7 +8,7 @@ from pyflink.datastream.connectors.kafka import \
 from pyflink.datastream.functions import MapFunction
 from pyflink.datastream.formats.json import JsonRowDeserializationSchema, JsonRowSerializationSchema
 from pyflink.datastream.state import ValueStateDescriptor
-from pyflink.common import Row
+from pyflink.common import Row, Configuration
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.common.typeinfo import Types
@@ -27,7 +27,9 @@ class EnrichmentFn(MapFunction):
         return Row(value[0], value[1], device_count)
 
 def my_streaming_app():
-    env = StreamExecutionEnvironment.get_execution_environment()
+    config = Configuration()
+    config.set_integer("python.fn-execution.bundle.time", 50)
+    env = StreamExecutionEnvironment.get_execution_environment(config)
     env.set_runtime_mode(RuntimeExecutionMode.STREAMING)
 
     CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))

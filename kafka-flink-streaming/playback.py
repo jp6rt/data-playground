@@ -6,7 +6,8 @@ import json
 from datetime import datetime
 from pykafka import KafkaClient
 
-KAFKA_HOST = "localhost:9092" # Or the address you want
+# KAFKA_HOST = "192.168.253.163:9092" # Or the address you want
+KAFKA_HOST = "127.0.0.1:9092" # Or the address you want
 
 client = KafkaClient(hosts = KAFKA_HOST)
 # topic = client.topics["source-events"]
