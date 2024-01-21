@@ -34,4 +34,4 @@ with topic.get_sync_producer() as producer:
         producer.produce(json.dumps(message2).encode())
         counter += 1
         print(f"Producing message: {json.dumps(message2)}")
-        time.sleep(0.1)
+        time.sleep(0.01)

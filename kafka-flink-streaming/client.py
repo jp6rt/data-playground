@@ -5,13 +5,13 @@ from datetime import datetime
 c = Consumer({
     'bootstrap.servers': 'localhost:9092',
     'group.id': 'test_group',
-    # 'auto.offset.reset': 'earliest'
+    'auto.offset.reset': 'latest'
 })
 
 c.subscribe(['my-sink-topic'])
 
 while True:
-    msg = c.poll(1.0)
+    msg = c.poll(0.01)
 
     if msg is None:
         continue

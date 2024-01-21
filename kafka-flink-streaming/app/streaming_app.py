@@ -12,25 +12,15 @@ from pyflink.common import Row, Configuration
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.common.typeinfo import Types
-
-class EnrichmentFn(MapFunction):
-    def open(self, runtime_context: RuntimeContext):
-        state_desc = ValueStateDescriptor('device_count', Types.INT())
-        self.device_count_state = runtime_context.get_state(state_desc)
-
-    def map(self, value):
-        device_count = self.device_count_state.value()
-        device_count = device_count if device_count is not None else 0
-        device_count = device_count + 1
-        self.device_count_state.update(device_count)
-        # curr_ts = int(datetime.now().timestamp() * 1e3)
-        return Row(value[0], value[1], device_count)
+from jpart.functions import DeviceCountFn
 
 def my_streaming_app():
     config = Configuration()
-    config.set_integer("python.fn-execution.bundle.time", 50)
+    config.set_string("python.execution-mode", "thread")
+    config.set_integer("python.fn-execution.bundle.time", 10)
     env = StreamExecutionEnvironment.get_execution_environment(config)
     env.set_runtime_mode(RuntimeExecutionMode.STREAMING)
+    env.set_parallelism(1)
 
     CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
     env.add_jars(
@@ -81,7 +71,7 @@ def my_streaming_app():
     # key by second index which is the deviceid
     ds = ds.key_by(lambda row: row[1])  \
         .map(
-            EnrichmentFn(),
+            DeviceCountFn(),
             output_type=sinkd_type_info
         )
 
