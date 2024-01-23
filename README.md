@@ -61,3 +61,52 @@ Open the web UI on [http://localhost:8081](http://localhost:8081)
 ```
 
 Open the web UI on [http://localhost:8080/](http://localhost:8080/)
+
+## Implementation samples
+
+### Kafka-Spark-Streaming
+
+**Perform aggregation from a file(s)**
+
+```
+./bin/spark-submit \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+  --master spark://aljresuento1.arcanys.com:7077 {path to}/load_csv.py
+```
+
+**Perform windowed aggregations from a streaming topic**
+
+```
+# create kafka topic
+./bin/kafka-topics.sh --create --topic source-events --bootstrap-server localhost:9092
+
+# submit the job
+./bin/spark-submit \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+  --master spark://aljresuento1.arcanys.com:7077 {path to}/streaming.py
+
+# run the playback script
+python playback.py
+```
+
+### Kafka-Flink-Streaming
+
+**Stateful streaming from/to kafka source/sink**
+
+```
+# create kafka topics
+./bin/kafka-topics.sh --create --topic my-source-topic --bootstrap-server localhost:9092
+./bin/kafka-topics.sh --create --topic my-sink-topic --bootstrap-server localhost:9092
+
+# submit streaming app
+./bin/flink run \
+  -py {path to}/big-data-git/kafka-flink-streaming/app/streaming_app.py \
+  --pyFiles {path to}/big-data-git/kafka-flink-streaming/app/deps
+
+# start the client
+python client.py
+
+# start the playback
+python playback.py
+```
+

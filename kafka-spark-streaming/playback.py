@@ -9,10 +9,9 @@ from pykafka import KafkaClient
 KAFKA_HOST = "localhost:9092" # Or the address you want
 
 client = KafkaClient(hosts = KAFKA_HOST)
-# topic = client.topics["source-events"]
-# used in flink
-topic = client.topics["event-consumer-topic"]
+topic = client.topics["source-events"]
 
+# update this path to point to your local data file
 output_path = "/home/joeyresuento/Projects/data_training/engineering/big-data-git/data/iot_telemetry_data.csv"
 telemetry_data = []
 
