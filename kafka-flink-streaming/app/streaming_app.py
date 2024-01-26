@@ -21,6 +21,8 @@ def my_streaming_app():
     env = StreamExecutionEnvironment.get_execution_environment(config)
     env.set_runtime_mode(RuntimeExecutionMode.STREAMING)
     env.set_parallelism(1)
+    # env.enable_checkpointing(1000)
+    # env.get_checkpoint_config().set_checkpoint_storage_dir("hdfs:///flink/checkpoints/streaming_app")
 
     CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
     env.add_jars(

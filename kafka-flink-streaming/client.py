@@ -3,7 +3,8 @@ from confluent_kafka import Consumer
 from datetime import datetime
 
 c = Consumer({
-    'bootstrap.servers': 'localhost:9092',
+    # 'bootstrap.servers': 'localhost:9092',
+    'bootstrap.servers': '192.168.253.163:9092',
     'group.id': 'test_group',
     'auto.offset.reset': 'latest'
 })
@@ -26,6 +27,6 @@ while True:
     ts = decoded_msg['ts']
     curr_time = int(datetime.now().timestamp() * 1e3)
     latency = curr_time - ts
-    print(f"message: device={decoded_msg['device']} latency={latency}")
+    print(f"message: device={decoded_msg['device']} latency={latency} device_count={decoded_msg['device_count']}")
 
 c.close()
