@@ -1,7 +1,7 @@
-# Hadoop, Spark, Kafka, Flink, ...
+# Data playground
 
 
-Code examples for big data tools and frameworks.
+Code examples for big data tools, analytics and frameworks.
 
 ## Prerequisites
 
