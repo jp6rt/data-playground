@@ -12,7 +12,7 @@ spark.sparkContext.setLogLevel('WARN')
 df = spark \
     .read \
     .option("header", True) \
-    .csv("/home/joeyresuento/Projects/data_training/engineering/big-data-git/data/iot_telemetry_data.csv")
+    .csv("/home/joeyresuento/Projects/data_training/engineering/data-playground-git/data/iot_telemetry_data.csv")
 
 df.printSchema()
 
