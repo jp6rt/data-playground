@@ -1,7 +1,4 @@
-# Data Engineering Notebooks and Scripts
-
-
-Code examples for big data tools, analytics and frameworks.
+# Notes for ETL, streaming and data analytics.
 
 ## Prerequisites
 
